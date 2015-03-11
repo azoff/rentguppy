@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+{% capture lvl %}{{ page.path | split:'/' | size | minus:1 }}{% endcapture %}
+{% capture rel %}{% for i in (1..lvl) %}../{% endfor %}{% endcapture %}
+
+<html>
+
+{% include head.html %}
+
+<body>
+
+{% include content.html %}
+
+{% include footer.html %}
+
+{% include js.html %}
+
+</body>
+
+</html>

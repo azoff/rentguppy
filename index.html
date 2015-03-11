@@ -1,0 +1,49 @@
+---
+title:  Welcome
+layout: default
+css:    index
+---
+
+<header>
+	<h1>{{ site.data.copy.title }}</h1>
+	<h4>{{ site.data.copy.description }}</h4>
+</header>
+
+<section>
+	<h3>How's it work?</h3>
+	<ol>
+		<li>
+			<h4>step 1</h4>
+			<h5>Find some roommates</h5>
+			<img alt="roomates" src="/img/roommates.jpg" />
+		</li>
+		<li>
+			<h4>step 2</h4>
+			<h5>Start a live room auction</h5>
+			<img alt="auction" src="/img/auction.jpg" />
+		</li>
+		<li>
+			<h4>step 3</h4>
+			<h5>Find a happy equilibrium</h5>
+			<img alt="happy" src="/img/happy.jpg" />
+		</li>
+	</ol>
+</section>
+
+<form method="POST">
+
+	<h3>Ready to start?</h3>
+
+	<fieldset>
+		<input id="rooms" name="rooms" type="number" min="1" step="1" value="2" />
+		<label for="rooms">How many bedrooms?</label>
+	</fieldset>
+
+	<fieldset>
+		<input id="rent" name="rent" type="number" min="1" step="1" value="2500" />
+		<label for="rent">How much is the total rent?</label>
+	</fieldset>
+
+	<button type="submit">Start Auction</button>
+
+</form>

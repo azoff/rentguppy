@@ -1,0 +1,11 @@
+$size-unit: 16px;
+$size-half-unit: $size-unit/2;
+
+$color-base: #EB3619;
+$color-hover: #FF5135;
+$color-active: #9E1D08;
+$color-inverse: #009E57;
+$color-inverse-alt: #19EB8D;
+$color-copy: desaturate($color-base, 90%);
+
+$breakpoint-tablet: 768px;
