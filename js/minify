@@ -11,8 +11,9 @@ minify ()
         --stats \
         --verbose \
         --output=$BUILDDIR/$1.min.js \
-        --source-map=$BUILDDIR/$1.min.map \
-        --source-map-url=$1.min.map \
+        --source-map-include-sources=true \
+        --source-map=$BUILDDIR/$1.map.json \
+        --source-map-url=$1.map.json \
         --preamble="/* RentGuppy (C) 2015 */" --\
         $DIRNAME/$1/*.js
 }
@@ -23,7 +24,6 @@ watch()
 }
 
 if [ -z "$1" ] ; then
-    echo "ls $DIRNAME | grep -v $( basename $BUILDDIR ) | grep -v $( basename $0 )"
     TARGETS=$( ls $DIRNAME | grep -v $( basename $BUILDDIR ) | grep -v $( basename $0 ) )
     for TARGET in $TARGETS; do
         minify $TARGET
