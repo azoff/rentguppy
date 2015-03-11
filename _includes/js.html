@@ -1,4 +1,4 @@
-<script src="{{ rel }}js/require.js" data-main="{{ rel }}js/app.js"></script>
+<script src="{{ rel }}js/build/lib.min.js"></script>
 {% if page.js %}
-<script>require(['{{ page.js }}']);</script>
+<script src="{{ rel }}js/build/{{ page.js }}.min.js"></script>
 {% endif %}

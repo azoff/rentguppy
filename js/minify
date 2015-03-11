@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+
+DIRNAME=$( dirname "${BASH_SOURCE[0]}" )
+BUILDDIR="$DIRNAME/build"
+
+minify ()
+{
+    echo "compressing $1..."
+    uglifyjs \
+        --screw-ie8 \
+        --stats \
+        --verbose \
+        --output=$BUILDDIR/$1.min.js \
+        --source-map=$BUILDDIR/$1.min.map \
+        --source-map-url=$1.min.map \
+        --preamble="/* RentGuppy (C) 2015 */" --\
+        $DIRNAME/$1/*.js
+}
+
+watch()
+{
+   fswatch -0 --exclude 'build/' --exclude '___$' --include '.js$' -- $1
+}
+
+if [ -z "$1" ] ; then
+    echo "ls $DIRNAME | grep -v $( basename $BUILDDIR ) | grep -v $( basename $0 )"
+    TARGETS=$( ls $DIRNAME | grep -v $( basename $BUILDDIR ) | grep -v $( basename $0 ) )
+    for TARGET in $TARGETS; do
+        minify $TARGET
+    done
+elif [ "$1" == "watch" ] ; then
+    echo "watching $DIRNAME..."
+    watch $DIRNAME | while read -d "" FILENAME ; do
+        echo "$FILENAME changed..."
+        minify $( dirname $FILENAME | xargs basename )
+    done
+fi

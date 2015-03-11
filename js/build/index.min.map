@@ -1,0 +1,1 @@
+{"version":3,"file":"./js/build/index.min.js","sources":["./js/index/index.js"],"names":["document","querySelector","addEventListener","e","preventDefault","body","classList","add"],"mappings":";AAAA,YAEAA,UAASC,cAAc,QAAQC,iBAAiB,SAAU,SAASC,GAClEA,EAAEC,gBACFJ,UAASK,KAAKC,UAAUC,IAAI"}
