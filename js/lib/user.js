@@ -2,16 +2,19 @@
 
 	"use strict";
 
-	function User(model) {
+	function User(model, auction) {
+		var ref = User.current.ref;
+		this.auction = auction;
 		this.model = model || {};
+		this.current = ref ? ref.model.id === this.model.id : true;
 	}
 
 	User.sessionKey = "user.current";
 
-	User.prototype.save = function(done) {
+	User.prototype.withDefaults = function() {
 
 		if (!this.model.id) {
-			var seed = utils.stamp();
+			var seed = utils.randomSeed();
 			seed += document.referrer;
 			seed += navigator.userAgent;
 			[].slice.call(navigator.plugins).forEach(function(p){
@@ -21,31 +24,43 @@
 			this.model.id = utils.hashCode(seed)
 		}
 
-		if (!this.model.name) {
+		if (!this.model.name)
 			this.model.name = "anonymous";
-		}
 
+		if (!this.model.color)
+			this.model.color = utils.rgbToHex(utils.randomNeutralRGB());
+
+		return this;
+
+	};
+
+	User.prototype.cache = function() {
 		app.session.setItem(User.sessionKey, JSON.stringify(this.model));
-		app.users().child(this.model.id).set(this.model, done)
-
+		return this;
 	};
 
-	User.prototype.join = function(auction, done) {
-		this.model.auction_id = auction.model.id;
-		this.save(done);
+	User.prototype.ref = function() {
+		if (!this.auction) return null;
+		return this.auction.ref('users').child(this.model.id);
 	};
 
-	User.prototype.leave = function(done) {
-		this.model.auction_id = null;
-		this.save(done);
+	User.prototype.save = function(done) {
+		var ref = this.ref();
+		if (!ref) done(new Error("unable to lookup user reference, unknown parent auction"));
+		ref.set(this.model, done);
 	};
 
-	User.current = function c(done) {
+	User.prototype.delete = function(done) {
+		var ref = this.ref();
+		if (!ref) done(new Error("unable to delete user reference, unknown parent auction"))
+		ref.remove(done);
+	};
+
+	User.current = function c() {
 		if (c.ref) return c.ref;
 		var model = app.session.getItem(User.sessionKey);
 		c.ref = new User(model ? JSON.parse(model) : null);
-		if (!model) c.ref.save(done);
-		return c.ref;
+		return c.ref.withDefaults().cache();
 	};
 
 	global.User = User;

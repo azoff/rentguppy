@@ -21,14 +21,6 @@
 		return app.firebase().child("auctions")
 	};
 
-	app.users = function() {
-		return app.firebase().child("users")
-	};
-
-	app.rooms = function() {
-		return app.firebase().child("rooms")
-	};
-
 	global.app = app;
 
 })(window);

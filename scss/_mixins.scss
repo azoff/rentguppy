@@ -1,0 +1,18 @@
+@mixin text-overflow-ellipses {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+@mixin avatar($size-avatar: 2em) {
+	top: 0;
+	left: 0;
+	position: absolute;
+	width: $size-avatar;
+	height: $size-avatar;
+	display: inline-block;
+	@include border-radius(50%);
+	@include background-size(cover);
+	background-repeat: no-repeat;
+	background-position: center center;
+}

@@ -6,45 +6,104 @@
 		this.model = model || {};
 	}
 
-	Auction.prototype.save = function(done) {
-
+	Auction.prototype.withDefaults = function() {
 		if (!this.model.id) {
-			var user = User.current();
-			var seed = utils.stamp() + '|' + user.model.id;
+			var seed = utils.randomSeed() + '|' + User.current().model.id;
 			this.model.id = utils.hashCode(seed)
 		}
-
-		if (!this.model.name) {
+		if (!this.model.name)
 			this.model.name = "new auction";
-		}
-
-		app.auctions().child(this.model.id).set(this.model, done)
-
+		if (!this.model.users)
+			this.model.users = {};
+		if (!this.model.rooms)
+			this.model.rooms = {};
+		return this;
 	};
 
-	Auction.prototype.url = function() {
-		return "/auction/#" + this.model.id;
+	Auction.prototype.save = function(done) {
+		this.ref().set(this.model, done)
+	};
+
+	Auction.prototype.ref = function(child) {
+		var ref = app.auctions().child(this.model.id);
+		if (child) ref = ref.child(child);
+		return ref;
+	};
+
+	Auction.prototype.url = function(base) {
+		var url = base || "/";
+		url += "/auction/#";
+		url += this.model.id;
+		return url.replace(/\/\//g, '/');
+	};
+
+	Auction.prototype.users = function() {
+		var users = [];
+		var auction = this;
+		var models = this.model.users;
+		Object.keys(models).forEach(function(id){
+			users.push(auction.user(id));
+		});
+		return users;
+	};
+
+	Auction.prototype.addUser = function(user, done) {
+		user.auction = this;
+		this.model.users[user.model.id] = user.model;
+		if (done) user.save(done);
+	};
+
+	Auction.prototype.removeUser = function(user, done) {
+		if (done) user.delete(done)
+		delete this.model.users[user.model.id];
+		delete user.auction;
+	};
+
+	Auction.prototype.user = function(id) {
+		return new User(this.model.users[id], this).withDefaults();
+	};
+
+	Auction.prototype.generateRoom = function(done) {
+		var room = new Room(null, this).withDefaults();
+		this.addRoom(room, done);
+	};
+
+	Auction.prototype.addRoom = function(room, done) {
+		room.auction = this;
+		this.model.rooms[room.model.id] = room.model;
+		if (done) room.save(done);
+	};
+
+	Auction.prototype.removeRoom = function(room, done) {
+		if (done) room.delete(done);
+		delete this.model.rooms[room.model.id];
+		delete room.auction;
+	};
+
+	Auction.prototype.rooms = function() {
+		var rooms = [];
+		var auction = this;
+		var models = this.model.rooms;
+		Object.keys(models).forEach(function(id){
+			rooms.push(auction.room(id));
+		});
+		return rooms;
+	};
+
+	Auction.prototype.room = function(id) {
+		return new Room(this.model.rooms[id], this).withDefaults();
 	};
 
 	Auction.create = function(rent, rooms, done) {
-		var auction = new Auction({ rent: rent });
-		auction.save(function(err){
-			if (err) return done(err);
-			var i, wait = rooms;
-			for (i=0; i<rooms; i++) {
-				Room.create(auction, function(ierr){
-					if (err) return;
-					if (ierr) return done(err = ierr);
-					if (--wait <= 0) done();
-				});
-			}
-		});
-		return auction
+		var auction = new Auction({ rent: rent }).withDefaults();
+		for (var i=0; i<rooms; i++) auction.generateRoom();
+		auction.save(function(err){ done(err, auction); });
 	};
 
 	Auction.load = function(id, done) {
-		app.auctions().child(id).once('value', function(modelRef) {
-			done(modelRef.exists() ? new Auction(modelRef.val()) : null)
+		app.auctions().child(id).once('value', function(ref) {
+			if (!ref.exists()) done(null);
+			else done(new Auction(ref.val()).withDefaults());
 		});
 	};
 

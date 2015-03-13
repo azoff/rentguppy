@@ -1,4 +1,199 @@
 @import "compass";
+@import "mixins";
 @import "constants";
 
+body {
+
+	&::before, &::after {
+		z-index: 99;
+		left: -9999px;
+		display: block;
+		position: fixed;
+		@include opacity(0);
+		@include transition(opacity 500ms, left 0s ease 500ms);
+	}
+
+	&::after {
+		top: 50%;
+		width: 310px;
+		margin: (-155px - $size-unit) 0 0 -155px;
+		padding-top: 310px + $size-unit;
+		content: 'Preparing Auction...';
+		text-align: center;
+		background: url(/icon/largetile.png) no-repeat center top/contain transparent;
+	}
+
+	&::before {
+		top: 0;
+		content: '';
+		width: 100%;
+		height: 100%;
+		background-color: white;
+	}
+
+	&.loading::before {
+		left: 0;
+	}
+
+	&.loading::after {
+		left: 50%;
+	}
+
+	&.loading::before, &.loading::after {
+		@include opacity(1);
+		@include transition(opacity 500ms, left 0s);
+
+	}
+}
+
+#content {
+	height: 100vh;
+	position: relative;
+}
+
+$size-aside-width: 16em;
+$size-full-padding: 2em;
+$size-half-padding: $size-full-padding/2;
+
+aside {
+	top: 0;
+	left: 0;
+	width: $size-aside-width;
+	height: 100%;
+	position: absolute;
+	z-index: 2;
+	padding: $size-full-padding;
+	background-color: white;
+
+	h1 {
+		padding-bottom: $size-full-padding;
+	}
+
+	.user {
+		$size-avatar: 2em;
+		display: block;
+		margin-top: $size-half-padding;
+		position: relative;
+		.avatar {
+			@include avatar($size-avatar);
+		}
+		h3 {
+			line-height: $size-avatar;
+			padding-left: $size-avatar + 0.5em;
+			@include text-overflow-ellipses;
+			display: block;
+		}
+	}
+
+}
+
+section {
+
+	z-index: 1;
+	height: 100%;
+	position: relative;
+	background-color: $color-base;
+	padding: $size-full-padding $size-full-padding $size-full-padding ($size-aside-width + $size-full-padding);
+
+	header {
+		color: white;
+		.rent {
+			float: right;
+			margin-left: $size-half-padding;
+			font-size: 1.2em;
+			line-height: 2 * $size-unit;
+			color: fade-out(white, 0.2);
+			strong {
+				color: fade-out(white, 0);
+			}
+		}
+	}
+
+	.room {
+
+		$size-room: 13em;
+		position: relative;
+		width: $size-room;
+		height: $size-room;
+		display: inline-block;
+		background-color: white;
+		padding: $size-half-padding;
+		@include border-radius($size-unit);
+		margin: $size-half-padding $size-half-padding 0 0;
+
+		.delete {
+			top: 0.2em;
+			right: 0.5em;
+			font-size: 1.5em;
+			position: absolute;
+		}
+
+		.bids {
+
+			height: 7.5em;
+			overflow: auto;
+			-webkit-overflow-scrolling: touch;
+
+			.bid {
+
+				$size-avatar: 2em;
+
+				display: block;
+				margin-top: 1em;
+				position: relative;
+
+				.avatar {
+					@include avatar($size-avatar);
+				}
+
+				span {
+					line-height: $size-avatar;
+					padding-left: $size-avatar + 0.5em;
+					@include text-overflow-ellipses;
+					display: block;
+				}
+			}
+
+		}
+
+		form {
+			display: block;
+		}
+
+		input, button {
+			display: inline-block;
+		}
+
+		input {
+			width: 60%;
+			@include opacity(0.8);
+			&:focus {
+				@include opacity(1);
+			}
+		}
+
+		button {
+			color: $color-inverse;
+			margin-left: 0.5em;
+			padding: 0.5em;
+			width: 35%;
+			&:focus, &:hover {
+				color: white;
+				background-color: $color-inverse;
+				@include opacity(1);
+			}
+		}
+
+	}
+
+	.adder {
+		margin: 1em;
+		display: inline-block;
+		color: fade-out(white, 0.2);
+		&:hover {
+			color: fade-out(white, 0);
+		}
+	}
+
+}
 
