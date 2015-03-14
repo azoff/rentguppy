@@ -89,16 +89,58 @@ function render(auction) {
 	renderUsers(auction);
 	renderRooms(auction);
 	renderAuctionCopy(auction);
+	renderPrices(auction);
 }
 
-function sumTopBids() {
-	var total = 0;
-	//TODO: make this work
-	//var nodes = document.querySelectorAll(".bid:first-child .value");
-	//Array.prototype.slice.call(nodes).forEach(function(node){
-	//	total += parseInt(node.innerText, 10);
-	//});
-	return total;
+function renderPrices(auction) {
+
+	var total = auction.model.rent;
+	var rooms = auction.rooms();
+	var size = rooms.length;
+	var prices = {};
+	var sum = 0;
+
+	// first, get the prices for rooms with bids
+	rooms.forEach(function(room){
+		var model = { id: room.model.id };
+		var source = { model: model };
+		prices[room.model.id] = source;
+		var bids = room.bids();
+		switch (bids.length) {
+			case 0: return;
+			case 1:
+				model.value = bids[0].model.value;
+				break;
+			default:
+				model.value = bids[1].model.value + 1;
+				break;
+		}
+		source.value_class = 'user';
+		source.user = bids[0].user;
+		sum += model.value;
+		size--;
+	});
+
+	// next, split the remaining total amongst the non-bid rooms
+	var remaining = total - sum;
+	var split = Math.ceil(remaining / size);
+	rooms.forEach(function(room){
+		var model = prices[room.model.id].model;
+		if (!model.value) model.value = split;
+	});
+
+	// render the prices into the price containers
+	Object.keys(prices).forEach(function(id){
+		var source = prices[id];
+		var parent = ELS.rooms.querySelector('[data-id="'+id+'"] .price-container');
+		source.model.formatted = utils.formatDollars(source.model.value);
+		renderModel('price', source, parent);
+	});
+
+	// set the remaining bids available
+	ELS.remaining.value = remaining;
+	ELS.remaining.innerText = utils.formatDollars(remaining);
+
 }
 
 function renderAuctionCopy(auction) {
@@ -106,7 +148,6 @@ function renderAuctionCopy(auction) {
 	ELS.auctionName.parentNode.source = auction;
 	ELS.auctionName.innerText = auction.model.name;
 	ELS.total.innerText = utils.formatDollars(total);
-	ELS.remaining.innerText = utils.formatDollars(total-sumTopBids());
 }
 
 function renderUsers(auction) {
@@ -158,7 +199,7 @@ function renderModel(template, source, parent) {
 
 templates.register('user',
 	'<li class="user" data-id="{{ model.id }}">' +
-	'<div class="avatar" style="background-image:{{ model.avatar }};background-color:{{ model.color }}"></div>' +
+	'<canvas class="avatar" style="background-color:{{ model.color }}"></canvas>' +
 	'<h3 contenteditable="{{ current }}">{{ model.name }}</h3>' +
 	'</li>'
 );
@@ -169,15 +210,23 @@ templates.register('room',
 	'<a class="delete">&times;</a>' +
 	'<ul class="bids"></ul>' +
 	'<form>' +
-	'<input class="bid" type="number" min="1" step="1" placeholder="Place a bid..." />' +
+	'<input class="bid" type="number" min="1" step="1" placeholder="Set bid..." />' +
 	'<button type="submit">Bid!</button>' +
+	'<div class="price-container"></div>' +
 	'</form>' +
 	'</li>'
 );
 
+templates.register('price',
+	'<div class="price" data-id="{{ model.id }}">' +
+	'<canvas class="avatar" style="background-color:{{ user.model.color }}"></canvas>' +
+	'<h4 class="value {{ value_class }}">{{ model.formatted }}</h4>' +
+	'</div>'
+);
+
 templates.register('bid',
 	'<li class="bid" data-id="{{ model.id }}">' +
-	'<div class="avatar" style="background-image:{{ user.model.avatar }};background-color:{{ user.model.color }}"></div>' +
+	'<canvas class="avatar" style="background-color:{{ user.model.color }}"></canvas>' +
 	'<span class="value">${{ model.value }}</span>' +
 	'</li>'
 );
