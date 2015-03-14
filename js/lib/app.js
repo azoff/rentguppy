@@ -21,6 +21,13 @@
 		return app.firebase().child("auctions")
 	};
 
+	app.guard = function(fn) {
+		return function(err, out) {
+			if (err) app.error(err);
+			else if (fn) fn(out);
+		}
+	};
+
 	global.app = app;
 
 })(window);

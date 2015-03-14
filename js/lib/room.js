@@ -36,10 +36,10 @@
 	Room.prototype.bids = function() {
 		var bids = [];
 		var room = this;
-		Object.keys(this.model.bids).forEach(function(key){
+		Object.keys(room.model.bids).forEach(function(key){
 			bids.push(room.bid(key));
 		});
-		return bids;
+		return bids.sort(utils.bidSort);
 	};
 
 	Room.prototype.bid = function(id) {
@@ -67,14 +67,14 @@
 
 	Room.prototype.save = function(done) {
 		var ref = this.ref();
-		if (!ref) done(new Error("unable to lookup room reference, unknown parent auction"))
-		ref.set(this.model, done);
+		if (!ref) done(new Error("unable to lookup room reference, unknown parent auction"));
+		else ref.set(this.model, done);
 	};
 
 	Room.prototype.delete = function(done) {
 		var ref = this.ref();
-		if (!ref) done(new Error("unable to delete room reference, unknown parent auction"))
-		ref.remove(done);
+		if (!ref) done(new Error("unable to delete room reference, unknown parent auction"));
+		else ref.remove(done);
 	};
 
 	global.Room = Room;

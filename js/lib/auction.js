@@ -41,7 +41,7 @@
 		var users = [];
 		var auction = this;
 		var models = this.model.users;
-		Object.keys(models).forEach(function(id){
+		Object.keys(models).sort(utils.idSort).forEach(function(id){
 			users.push(auction.user(id));
 		});
 		return users;
@@ -54,7 +54,7 @@
 	};
 
 	Auction.prototype.removeUser = function(user, done) {
-		if (done) user.delete(done)
+		if (done) user.delete(done);
 		delete this.model.users[user.model.id];
 		delete user.auction;
 	};
@@ -71,7 +71,9 @@
 	Auction.prototype.addRoom = function(room, done) {
 		room.auction = this;
 		this.model.rooms[room.model.id] = room.model;
-		if (done) room.save(done);
+		if (done) room.save(function(err){
+			done(err, room);
+		});
 	};
 
 	Auction.prototype.removeRoom = function(room, done) {
@@ -84,7 +86,7 @@
 		var rooms = [];
 		var auction = this;
 		var models = this.model.rooms;
-		Object.keys(models).forEach(function(id){
+		Object.keys(models).sort(utils.idSort).forEach(function(id){
 			rooms.push(auction.room(id));
 		});
 		return rooms;
@@ -102,9 +104,9 @@
 
 	Auction.load = function(id, done) {
 		app.auctions().child(id).once('value', function(ref) {
-			if (!ref.exists()) done(null);
-			else done(new Auction(ref.val()).withDefaults());
-		});
+			if (!ref.exists()) done(null, null);
+			else done(null, new Auction(ref.val()).withDefaults());
+		}, done);
 	};
 
 	global.Auction = Auction;

@@ -13,20 +13,44 @@ function back() {
 	app.navigate(location.pathname.replace('auction', ''));
 }
 
-function main(auction) {
+function main(err, auction) {
+	if (err) app.error(err);
 	if (!auction) return back();
 	var user = User.current();
-	auction.addUser(user, function(err){
-		if (err) return app.error(err);
-		render(auction);
+	window.auction = auction;
+	auction.addUser(user, app.guard(function(){
 		addEventListeners(user, auction);
-		document.body.classList.remove('loading');
-	});
+		addEventReceiver(auction);
+		render(auction);
+	}));
 }
 
 function addEventListeners(user, auction) {
-	addExitListener(user, auction);
 	addBidListener(user, auction);
+	addNewRoomListener(auction);
+	addRemoveRoomListener(auction);
+	addContentListeners();
+}
+
+function addEventReceiver(auction) {
+	auction.ref().on('value', function(e){
+		auction.model = e.val();
+		render(auction.withDefaults());
+	}, app.guard());
+}
+
+function addContentListeners() {
+	document.body.addEventListener("input", utils.debounced(function(e){
+		var target = e.target;
+		if (!utils.matches(target, "[contenteditable=true]"))
+			return;
+		var source = target.parentNode.source;
+		if (!source)
+			throw new Error("unable to edit content without model source");
+		source.model.name = target.innerText;
+		source.save(app.guard());
+		if (source.cache) source.cache();
+	}, 1500));
 }
 
 function addBidListener(user, auction) {
@@ -34,25 +58,36 @@ function addBidListener(user, auction) {
 		e.preventDefault();
 		var bid = parseInt(e.target.childNodes[0].value, 10);
 		var room = auction.room(e.target.parentNode.dataset.id);
-		if (bid < 1 || isNaN(bid)) return app.error("bids must be greater than zero dollars!");
-		room.placeBid(user, bid, function(err, bid){
-			if (err) return app.error(err);
-			renderBid(bid)
-		});
+		if (isNaN(bid)) return app.error("please enter a valid bid amount");
+		if (bid < 1) return app.error("bids must be positive numbers");
+		if (bid > auction.rent) return app.error("bids must be less than the total rent");
+		room.placeBid(user, bid, app.guard(renderBid));
 	});
 }
 
-function addExitListener(user, auction) {
-	window.addEventListener('beforeunload', function(){
-		auction.removeUser(user, function(err){
-			if (err) return app.error(err);
-		});
+function addNewRoomListener(auction) {
+	ELS.adder.addEventListener('click', function(e){
+		e.preventDefault();
+		auction.generateRoom(app.guard(renderRoom));
+	});
+}
+
+function addRemoveRoomListener(auction) {
+	ELS.rooms.addEventListener('click', function(e){
+		if (!utils.matches(e.target, ".delete")) return;
+		e.preventDefault();
+		var target = e.target.parentNode;
+		if (!target.source) throw new Error("unable to delete room, missing model source");
+		auction.removeRoom(target.source, app.guard());
+		if (target.parentNode)
+			target.parentNode.removeChild(target);
 	});
 }
 
 function render(auction) {
-	auction.users().forEach(renderUser);
-	auction.rooms().forEach(renderRoom);
+	document.body.classList.remove('loading');
+	renderUsers(auction);
+	renderRooms(auction);
 	renderAuctionCopy(auction);
 }
 
@@ -68,9 +103,20 @@ function sumTopBids() {
 
 function renderAuctionCopy(auction) {
 	var total = auction.model.rent;
+	ELS.auctionName.parentNode.source = auction;
 	ELS.auctionName.innerText = auction.model.name;
 	ELS.total.innerText = utils.formatDollars(total);
 	ELS.remaining.innerText = utils.formatDollars(total-sumTopBids());
+}
+
+function renderUsers(auction) {
+	utils.pruneChildren(ELS.roommates, auction.model.users);
+	auction.users().forEach(renderUser)
+}
+
+function renderRooms(auction) {
+	utils.pruneChildren(ELS.rooms, auction.model.rooms);
+	auction.rooms().forEach(renderRoom);
 }
 
 function renderUser(user) {
@@ -79,19 +125,35 @@ function renderUser(user) {
 
 function renderRoom(room) {
 	renderModel('room', room, ELS.rooms);
-	room.bids().forEach(renderBid);
+	renderBids(room);
 }
 
-function renderBid(bid) {
-	var parent = ELS.rooms.querySelector('[data-id="' + bid.room.model.id + '"] .bids');
+function renderBids(room) {
+	var parent = ELS.rooms.querySelector('[data-id="' + room.model.id + '"] .bids');
+	utils.pruneChildren(parent, room.model.bids);
+	room.bids().forEach(function(bid){
+		renderBid(bid, parent);
+	});
+}
+
+function renderBid(bid, parent) {
+	if (!parent)
+		parent = ELS.rooms.querySelector('[data-id="' + bid.room.model.id + '"] .bids');
 	renderModel('bid', bid, parent);
 }
 
-function renderModel(template, model, parent) {
+function renderModel(template, source, parent) {
 	//TODO: cache these?
-	var existing = parent.querySelector('[data-id="' + model.model.id + '"]');
-	if (existing) existing.outerHTML = templates.render(template, model);
-	else parent.appendChild(templates.renderNode(template, model));
+	var selector = '[data-id="' + source.model.id + '"]';
+	var existing = parent.querySelector(selector);
+	if (existing) {
+		existing.outerHTML = templates.render(template, source);
+		parent.querySelector(selector).source = source;
+	} else {
+		var node = templates.renderNode(template, source);
+		node.source = source;
+		parent.appendChild(node);
+	}
 }
 
 templates.register('user',

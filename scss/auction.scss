@@ -52,8 +52,6 @@ body {
 }
 
 $size-aside-width: 16em;
-$size-full-padding: 2em;
-$size-half-padding: $size-full-padding/2;
 
 aside {
 	top: 0;
@@ -62,24 +60,24 @@ aside {
 	height: 100%;
 	position: absolute;
 	z-index: 2;
-	padding: $size-full-padding;
+	padding: 2em;
 	background-color: white;
 
 	h1 {
-		padding-bottom: $size-full-padding;
+		padding-bottom: 1em;
 	}
 
 	.user {
 		$size-avatar: 2em;
 		display: block;
-		margin-top: $size-half-padding;
+		margin-top: 1em;
 		position: relative;
 		.avatar {
 			@include avatar($size-avatar);
 		}
 		h3 {
 			line-height: $size-avatar;
-			padding-left: $size-avatar + 0.5em;
+			margin-left: $size-avatar + 0.5em;
 			@include text-overflow-ellipses;
 			display: block;
 		}
@@ -91,15 +89,17 @@ section {
 
 	z-index: 1;
 	height: 100%;
+	overflow: auto;
 	position: relative;
 	background-color: $color-base;
-	padding: $size-full-padding $size-full-padding $size-full-padding ($size-aside-width + $size-full-padding);
+	padding: 2em 2em 2em ($size-aside-width + 2em);
 
 	header {
 		color: white;
+		padding-bottom: 1em;
 		.rent {
 			float: right;
-			margin-left: $size-half-padding;
+			margin-left: 1em;
 			font-size: 1.2em;
 			line-height: 2 * $size-unit;
 			color: fade-out(white, 0.2);
@@ -109,46 +109,54 @@ section {
 		}
 	}
 
+	.rooms {
+		overflow: hidden;
+	}
+
 	.room {
 
 		$size-room: 13em;
+		display: block;
+		float: left;
 		position: relative;
 		width: $size-room;
-		height: $size-room;
-		display: inline-block;
 		background-color: white;
-		padding: $size-half-padding;
+		padding: 1em;
 		@include border-radius($size-unit);
-		margin: $size-half-padding $size-half-padding 0 0;
+		margin: 1em 1em 0 0;
 
 		.delete {
-			top: 0.2em;
-			right: 0.5em;
+			top: 0.35em;
+			right: 0.7em;
 			font-size: 1.5em;
 			position: absolute;
 		}
 
 		.bids {
 
-			height: 7.5em;
-			overflow: auto;
-			-webkit-overflow-scrolling: touch;
 
 			.bid {
 
 				$size-avatar: 2em;
-
 				display: block;
-				margin-top: 1em;
+				padding-top: 1em;
 				position: relative;
 
 				.avatar {
 					@include avatar($size-avatar);
+					top: 1em;
+				}
+
+				&:first-child {
+					span {
+						font-weight: 800;
+						color: $color-inverse;
+					}
 				}
 
 				span {
 					line-height: $size-avatar;
-					padding-left: $size-avatar + 0.5em;
+					margin-left: $size-avatar + 0.5em;
 					@include text-overflow-ellipses;
 					display: block;
 				}
@@ -157,6 +165,7 @@ section {
 		}
 
 		form {
+			padding-top: $size-unit;
 			display: block;
 		}
 
@@ -166,6 +175,7 @@ section {
 
 		input {
 			width: 60%;
+			border: none 0;
 			@include opacity(0.8);
 			&:focus {
 				@include opacity(1);

@@ -64,6 +64,40 @@
 		return fallback;
 	};
 
+	utils.debounced = function(fn, timeout) {
+		return function(){
+			var args = Array.prototype.slice.call(arguments);
+			if (fn.timeout) clearTimeout(fn.timeout);
+			fn.timeout = setTimeout(function(){
+				fn.apply(null, args);
+			}, timeout || 700);
+		};
+	};
+
+	utils.matches = function(el, selector) {
+		return (el.matches || el.matchesSelector || el.msMatchesSelector || el.mozMatchesSelector || el.webkitMatchesSelector || el.oMatchesSelector).call(el, selector);
+	};
+
+	utils.idSort = function(a, b) {
+		return a.localeCompare(b);
+	};
+
+	utils.bidSort = function(a, b) {
+		return b.model.value - a.model.value;
+	};
+
+	utils.idMapToSelector = function(idMap) {
+		var ids = Object.keys(idMap);
+		return '[data-id="' + ids.join('"][data-id="') + '"]'
+	};
+
+	utils.pruneChildren = function(el, ids) {
+		Array.prototype.slice.call(el.childNodes).forEach(function(child){
+			if (child.dataset.id in ids) return;
+			el.removeChild(child);
+		});
+	};
+
 	global.utils = utils;
 
 })(window);

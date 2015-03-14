@@ -10,7 +10,7 @@
 
 	Bid.prototype.withDefaults = function() {
 		if (!this.model.id)
-			this.model.id = this.room.model.id + '|' + this.user.model.id;
+			this.model.id = this.user.model.id;
 		return this;
 	};
 
