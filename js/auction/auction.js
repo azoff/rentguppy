@@ -60,7 +60,7 @@ function addBidListener(user, auction) {
 		var room = auction.room(e.target.parentNode.dataset.id);
 		if (isNaN(bid)) return app.error("please enter a valid bid amount");
 		if (bid < 1) return app.error("bids must be positive numbers");
-		if (bid > auction.rent) return app.error("bids must be less than the total rent");
+		if (bid > ELS.remaining.value) return app.error("bids must be less than the remaining rent");
 		room.placeBid(user, bid, app.guard(renderBid));
 	});
 }

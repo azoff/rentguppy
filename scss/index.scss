@@ -44,7 +44,7 @@ header {
 	height: 100vh;
 	min-height: 50vw;
 	padding: 3 * $size-unit;
-	background: url(/img/bg.jpg) no-repeat right bottom fixed white;
+	background: url(../img/bg.jpg) no-repeat right bottom fixed white;
 	@include background-size(auto 100%);
 
 	h1 {
