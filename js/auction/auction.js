@@ -29,7 +29,15 @@ function addEventListeners(user, auction) {
 	addBidListener(user, auction);
 	addNewRoomListener(auction);
 	addRemoveRoomListener(auction);
+	addFocusBidListener();
 	addContentListeners();
+}
+
+function addFocusBidListener() {
+	ELS.rooms.addEventListener('click', function(e){
+		if (!utils.matches(e.target, '.bids')) return;
+		e.target.nextSibling.childNodes[0].focus();
+	});
 }
 
 function addEventReceiver(auction) {
@@ -40,23 +48,48 @@ function addEventReceiver(auction) {
 }
 
 function addContentListeners() {
-	document.body.addEventListener("input", utils.debounced(function(e){
-		var target = e.target;
-		if (!utils.matches(target, "[contenteditable=true]"))
-			return;
+	var target;
+
+	function save(e) {
+
+		if (!target) return;
+		var targeted = e.target === target;
+		if (e.type === 'click' && targeted) return;
+		else if (e.which !== 13 && e.which !== 27 && targeted) return;
+		else if (e.type === 'keyup') e.preventDefault();
+
+		if (targeted) target.blur();
+
+		var key = 'name';
+		if (target.dataset.key)
+			key = target.dataset.key;
 		var source = target.parentNode.source;
 		if (!source)
 			throw new Error("unable to edit content without model source");
-		source.model.name = target.innerText;
+		source.model[key] = target.innerText;
+		if (target.dataset.type === 'number')
+			source.model[key] = utils.cleanNumber(source.model[key]);
 		source.save(app.guard());
 		if (source.cache) source.cache();
-	}, 1500));
+
+	}
+
+	function mark(e) {
+		if (!utils.matches(e.target, "[contenteditable=true]")) return;
+		target = e.target;
+	}
+
+	document.body.addEventListener('keyup', mark);
+	document.body.addEventListener('paste', mark);
+	document.body.addEventListener('input', mark);
+	document.body.addEventListener('click', save);
+	document.body.addEventListener('keyup', save);
 }
 
 function addBidListener(user, auction) {
 	ELS.rooms.addEventListener("submit", function(e){
 		e.preventDefault();
-		var bid = parseInt(e.target.childNodes[0].value, 10);
+		var bid = utils.cleanNumber(e.target.childNodes[0].value);
 		var room = auction.room(e.target.parentNode.dataset.id);
 		if (isNaN(bid)) return app.error("please enter a valid bid amount");
 		if (bid < 1) return app.error("bids must be positive numbers");
@@ -145,6 +178,7 @@ function renderPrices(auction) {
 
 function renderAuctionCopy(auction) {
 	var total = auction.model.rent;
+	ELS.total.parentNode.source = auction;
 	ELS.auctionName.parentNode.source = auction;
 	ELS.auctionName.innerText = auction.model.name;
 	ELS.total.innerText = utils.formatDollars(total);
@@ -165,7 +199,7 @@ function renderUser(user) {
 }
 
 function renderRoom(room) {
-	renderModel('room', room, ELS.rooms);
+	renderModel('room', room, ELS.rooms, true);
 	renderBids(room);
 }
 
@@ -183,13 +217,15 @@ function renderBid(bid, parent) {
 	renderModel('bid', bid, parent);
 }
 
-function renderModel(template, source, parent) {
+function renderModel(template, source, parent, noupdates) {
 	//TODO: cache these?
 	var selector = '[data-id="' + source.model.id + '"]';
 	var existing = parent.querySelector(selector);
 	if (existing) {
-		existing.outerHTML = templates.render(template, source);
-		parent.querySelector(selector).source = source;
+		if (!noupdates) {
+			existing.outerHTML = templates.render(template, source);
+			parent.querySelector(selector).source = source;
+		}
 	} else {
 		var node = templates.renderNode(template, source);
 		node.source = source;

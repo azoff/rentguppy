@@ -105,6 +105,9 @@ section {
 			color: fade-out(white, 0.2);
 			strong {
 				color: fade-out(white, 0);
+				&[contenteditable=true]:focus {
+					color: fade-out(white, 0.2);
+				}
 			}
 		}
 	}
@@ -134,7 +137,7 @@ section {
 
 		.bids {
 
-			min-height: 3em;
+			min-height: 6em;
 
 			.bid {
 
@@ -195,7 +198,7 @@ section {
 			}
 		}
 
-		.price {
+		.price-container {
 			top: 0;
 			width: 100%;
 			height: 100%;
@@ -212,7 +215,10 @@ section {
 				top: 50%;
 				left: 50%;
 				margin: $avatar-size/-2;
-				@include opacity(0.7);
+			}
+			.price, .value {
+				position: relative;
+				top: 50%;
 			}
 			.value {
 				font-weight: 800;
@@ -222,13 +228,11 @@ section {
 					@include text-shadow(1px 1px 0 fade-out($color-copy, 0.5));
 				}
 				font-size: 2.5em;
-				position: relative;
-				top: 50%;
 				margin-top: -0.6em;
 			}
 		}
 
-		&:hover .price, &:focus ~ .price {
+		&:hover .price-container, :focus ~ .price-container {
 			left: -9999px;
 			@include opacity(0);
 			@include transition(opacity 200ms, left 0s ease 200ms);

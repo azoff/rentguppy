@@ -52,6 +52,10 @@
 		return '$' + x1 + x2;
 	};
 
+	utils.cleanNumber = function(number) {
+		return parseInt(number.replace(/[^\d]/g, ''), 10);
+	};
+
 	utils.valueAtPath = function fn(context, keypath, fallback) {
 		var keys = keypath.split('.');
 		var key = keys.shift();
