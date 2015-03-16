@@ -73,7 +73,7 @@ aside {
 		margin-top: 1em;
 		position: relative;
 		.avatar {
-			cursor: pointer;
+			&[data-toggle=true] { cursor: pointer; }
 			@include avatar($size-avatar);
 		}
 		h3 {

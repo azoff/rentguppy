@@ -29,6 +29,10 @@
 		return hex.length == 1 ? "0" + hex : hex;
 	};
 
+	utils.objEquals = function next(a, b) {
+		return JSON.stringify(a) === JSON.stringify(b);
+	};
+
 	utils.rgbToHex = function(rgb) {
 		return "#" + utils.intToHex(rgb[0]) + utils.intToHex(rgb[1]) + utils.intToHex(rgb[2]);
 	};
@@ -102,7 +106,7 @@
 		});
 	};
 	utils.trigger = function(el, name, data) {
-		var event;
+		var event; data = data || {};
 		if (window.CustomEvent) {
 			event = new CustomEvent(name, {detail: data});
 		} else {

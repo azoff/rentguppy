@@ -7,6 +7,7 @@
 		this.auction = auction;
 		this.model = model || {};
 		this.current = ref ? ref.model.id === this.model.id : true;
+		this.video = Video.get(this);
 	}
 
 	User.sessionKey = "user.current";
@@ -29,6 +30,8 @@
 
 		if (!this.model.color)
 			this.model.color = utils.rgbToHex(utils.randomNeutralRGB());
+
+		this.model.video = this.video.attr();
 
 		return this;
 

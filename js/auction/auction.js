@@ -128,7 +128,6 @@
 		renderRooms(auction);
 		renderAuctionCopy(auction);
 		renderPrices(auction);
-		utils.trigger(window, 'rendered', { auction: auction });
 	}
 
 	function renderPrices(auction) {
@@ -148,7 +147,7 @@
 			switch (bids.length) {
 				case 0: return;
 				case 1:
-					model.value = bids[0].model.value;
+					model.value = 1;
 					break;
 				default:
 					model.value = bids[1].model.value + 1;
@@ -182,12 +181,6 @@
 
 	}
 
-	function renderStreams(auction) {
-		auction.users().forEach(function(user){
-
-		});
-	}
-
 	function renderAuctionCopy(auction) {
 		var total = auction.model.rent;
 		ELS.total.parentNode.source = auction;
@@ -211,7 +204,7 @@
 	}
 
 	function renderRoom(room) {
-		renderModel('room', room, ELS.rooms, true);
+		renderModel('room', room, ELS.rooms);
 		renderBids(room);
 	}
 
@@ -229,13 +222,14 @@
 		renderModel('bid', bid, parent);
 	}
 
-	function renderModel(template, source, parent, noupdates) {
+	function renderModel(template, source, parent) {
 		//TODO: cache these?
 		var selector = '[data-id="' + source.model.id + '"]';
 		var existing = parent.querySelector(selector);
 		if (existing) {
-			if (!noupdates) {
-				existing.outerHTML = templates.render(template, source);
+			var html = templates.render(template, source);
+			if (existing.outerHTML !== html) {
+				existing.outerHTML = html;
 				parent.querySelector(selector).source = source;
 			}
 		} else {
@@ -247,7 +241,7 @@
 
 	templates.register('user',
 		'<li class="user" data-id="{{ model.id }}">' +
-		'<video autoplay data-user="{{ model.id }}" class="avatar" style="background-color:{{ model.color }}"></video>' +
+		'<video {{ model.video }} data-toggle="{{ current }}" class="avatar" style="background-color:{{ model.color }}"></video>' +
 		'<h3 contenteditable="{{ current }}">{{ model.name }}</h3>' +
 		'</li>'
 	);
@@ -267,14 +261,14 @@
 
 	templates.register('price',
 		'<div class="price" data-id="{{ model.id }}">' +
-		'<video autoplay data-user="{{ user.model.id }}" class="avatar" style="background-color:{{ user.model.color }}"></video>' +
+		'<video {{ user.model.video }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
 		'<h4 class="value {{ value_class }}">{{ model.formatted }}</h4>' +
 		'</div>'
 	);
 
 	templates.register('bid',
 		'<li class="bid" data-id="{{ model.id }}">' +
-		'<video autoplay data-user="{{ user.model.id }}" class="avatar" style="background-color:{{ user.model.color }}"></video>' +
+		'<video {{ user.model.video }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
 		'<span class="value">${{ model.value }}</span>' +
 		'</li>'
 	);

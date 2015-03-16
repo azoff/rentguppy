@@ -7,22 +7,12 @@
 		var auction = event.detail.auction;
 		user.connect(app.guard());
 		addEventListeners(user, auction);
-		shareStream(user, auction);
 	}
 
 	function addEventListeners(user, auction) {
 		addVideoClickListener(user, auction);
 		addPeerCallListeners(user);
 		addExitListener(user);
-		addRenderListener(auction);
-	}
-
-	function addRenderListener(auction) {
-		window.addEventListener('rendered', function(){
-			auction.users().forEach(function(user){
-				setStream(user, user.stream);
-			});
-		});
 	}
 
 	function addVideoClickListener(user, auction) {
@@ -39,16 +29,17 @@
 
 	function addExitListener(user) {
 		window.addEventListener('beforeunload', function(){
-			user.peer.disconnect(true, app.guard());
+			disconnectUserStream(user);
 		});
 	}
 
 	function addPeerCallListeners(user) {
 		user.peer.on('call', function(call){
 			var user = auction.peer(call.peer);
-			call.answer(user.stream);
+			if (!user) return;
+			call.answer(user.video.stream);
 			call.on('stream', acceptStream(user));
-			call.on('close', acceptStream(user));
+			call.on('disconnect', acceptStream(user));
 			call.on('error', function(err){
 				app.error('answer', user.model.id, err);
 			});
@@ -59,7 +50,7 @@
 	}
 
 	function toggleStream(user, auction) {
-		if (user.stream) disconnectUserStream(user);
+		if (user.video.stream) disconnectUserStream(user);
 		else connectUserStream(user, auction);
 	}
 
@@ -77,21 +68,17 @@
 	}
 
 	function setStream(user, stream) {
-		user.stream = stream;
-		var videos = document.querySelectorAll('[data-user="'+user.model.id+'"]');
-		var src = stream ? URL.createObjectURL(stream) : false;
-		Array.prototype.slice.call(videos).forEach(function(video){
-			if (src) video.src = src;
-			else delete video.src;
-		});
+		if (!stream) user.video.destroy();
+		else user.video.create(stream);
+		user.model.video = user.video.attr();
+		user.save(app.guard());
 	}
 
 	function shareStream(user, auction) {
 		auction.users().forEach(function(their){
 			if (!their.model.peer) return;
 			if (their.model.id === user.model.id) return;
-			var call = user.peer.call(their.model.peer, user.stream);
-			if (!call) return;
+			var call = user.peer.call(their.model.peer, user.video.stream);
 			call.on('stream', acceptStream(their));
 			call.on('error', function(err){
 				app.error('call', their.model.id, err);
