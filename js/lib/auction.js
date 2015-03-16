@@ -63,6 +63,14 @@
 		return new User(this.model.users[id], this).withDefaults();
 	};
 
+	Auction.prototype.peer = function(id) {
+		var user = null;
+		this.users().forEach(function(test){
+			if (test.model.peer === id) user = test;
+		});
+		return user;
+	};
+
 	Auction.prototype.generateRoom = function(done) {
 		var room = new Room(null, this).withDefaults();
 		this.addRoom(room, done);

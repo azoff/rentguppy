@@ -63,7 +63,7 @@
 			context = context[key];
 			keypath = keys.join('.');
 			if (keys.length <= 0) return context;
-			else return fn(context, keypath)
+			else return fn(context, keypath, fallback)
 		}
 		return fallback;
 	};
@@ -100,6 +100,16 @@
 			if (child.dataset.id in ids) return;
 			el.removeChild(child);
 		});
+	};
+	utils.trigger = function(el, name, data) {
+		var event;
+		if (window.CustomEvent) {
+			event = new CustomEvent(name, {detail: data});
+		} else {
+			event = document.createEvent('CustomEvent');
+			event.initCustomEvent(name, true, true, data);
+		}
+		el.dispatchEvent(event);
 	};
 
 	global.utils = utils;

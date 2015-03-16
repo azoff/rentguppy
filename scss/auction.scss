@@ -73,9 +73,11 @@ aside {
 		margin-top: 1em;
 		position: relative;
 		.avatar {
+			cursor: pointer;
 			@include avatar($size-avatar);
 		}
 		h3 {
+			text-transform: capitalize;
 			line-height: $size-avatar;
 			margin-left: $size-avatar + 0.5em;
 			@include text-overflow-ellipses;

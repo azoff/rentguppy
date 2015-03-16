@@ -39,6 +39,42 @@
 		return this;
 	};
 
+	User.prototype.connect = function(done) {
+
+		var user = this;
+
+		// check for existing peer
+		if (user.peer) {
+			if (user.peer.destroyed)
+				throw new Error('unable to reconnect to destroyed peer');
+			else if (user.peer.disconnected)
+				user.peer.reconnect();
+			return done(null, user.peer.id);
+		}
+
+		// create a new peer
+		user.peer = new Peer({key: 'nubs0cvy1d1jor'});
+		user.peer.on('open', function(id){
+			user.model.peer = id;
+			user.save(function(err){
+				done(err, id);
+			});
+		});
+
+	};
+
+	User.prototype.connected = function() {
+		return this.peer && !this.peer.disconnected && !this.peer.destroyed && this.model.peer === this.peer.id;
+	};
+
+	User.prototype.disconnect = function(destroy, done) {
+		if (!this.connected()) return done();
+		this.peer.destroy();
+		delete this.model.peer;
+		delete this.peer;
+		this.save(done);
+	};
+
 	User.prototype.ref = function() {
 		if (!this.auction) return null;
 		return this.auction.ref('users').child(this.model.id);

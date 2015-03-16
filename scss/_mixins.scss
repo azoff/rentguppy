@@ -15,4 +15,9 @@
 	@include background-size(cover);
 	background-repeat: no-repeat;
 	background-position: center center;
+	overflow: hidden;
+	@include transition(background-color 500ms);
+	&[src^=blob] {
+		background-color: #000000 !important;
+	}
 }
