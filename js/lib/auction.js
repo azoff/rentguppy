@@ -49,8 +49,14 @@
 
 	Auction.prototype.addUser = function(user, done) {
 		user.auction = this;
-		this.model.users[user.model.id] = user.model;
-		if (done) user.save(done);
+		if (user.model.id in this.model.users) {
+			if (done) done(null, user);
+		} else {
+			this.model.users[user.model.id] = user.model;
+			if (done) user.save(function(err){
+				done(err, user);
+			});
+		}
 	};
 
 	Auction.prototype.removeUser = function(user, done) {
@@ -116,6 +122,45 @@
 			else done(null, new Auction(ref.val()).withDefaults());
 		}, done);
 	};
+
+	//Auction.mock = function(id, done) {
+	//	var user = User.current();
+	//	var model = {
+	//		id: id,
+	//		name: 'moishe',
+	//		rent: 2000,
+	//		rooms: {
+	//			'228193973': {
+	//				name: 'Room 1',
+	//				id: '228193973',
+	//				bids: {
+	//					'965858678': 1400
+	//				}
+	//			},
+	//			'2281939734': {
+	//				name: 'Room 2',
+	//				id: '2281939734',
+	//				bids: {
+	//					'965858678': 100
+	//				}
+	//			},
+	//			'1267167606': {
+	//				name: 'Room 3',
+	//				id: '1267167606',
+	//				bids: {}
+	//			}
+	//		},
+	//		users: {
+	//			'965858678': {
+	//				id: '965858678',
+	//				color: '#a76755',
+	//				name: 'Adam'
+	//			}
+	//		}
+	//	};
+	//	model.users[user.model.id] = user.model;
+	//	done(null, new Auction(model));
+	//};
 
 	global.Auction = Auction;
 

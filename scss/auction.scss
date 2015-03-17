@@ -2,6 +2,28 @@
 @import "mixins";
 @import "constants";
 
+#error {
+	color: white;
+	font-size: 1.5em;
+	line-height: 1.4;
+	padding: 0.5em 1em;
+	text-align: center;
+	background-color: $color-hover;
+	@include text-shadow(1px 1px 0 fade-out(black, 0.5));
+	position: fixed;
+	z-index: 98;
+	top: 0;
+	left: 0;
+	width: 100%;
+	@include translateY(-100%);
+	@include box-shadow(0 0 0 0 fade-out(black, 1));
+	@include transition(transform 500ms, box-shadow 500ms);
+	&.open {
+		@include translateY(0%);
+		@include box-shadow(1px 1px 1px 0 fade-out(black, 0.9));
+	}
+}
+
 body {
 
 	&::before, &::after {
@@ -15,9 +37,9 @@ body {
 
 	&::after {
 		top: 50%;
-		width: 310px;
-		margin: (-155px - $size-unit) 0 0 -155px;
-		padding-top: 310px + $size-unit;
+		width: 230px;
+		margin: -171px 0 0 -115px;
+		padding-top: 243px;
 		content: 'Preparing Auction...';
 		text-align: center;
 		background: url(../icon/largetile.png) no-repeat center top/contain transparent;

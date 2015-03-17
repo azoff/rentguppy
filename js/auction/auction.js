@@ -2,6 +2,40 @@
 
 	"use strict";
 
+	templates.register('user',
+		'<li class="user" data-id="{{ model.id }}">' +
+		'<video {{ video.attr }} data-toggle="{{ current }}" class="avatar" style="background-color:{{ model.color }}"></video>' +
+		'<h3 contenteditable="{{ current }}">{{ model.name }}</h3>' +
+		'</li>'
+	);
+
+	templates.register('room',
+		'<li class="room" data-id="{{ model.id }}">' +
+		'<h3 contenteditable="true">{{ model.name }}</h3>' +
+		'<a class="delete">&times;</a>' +
+		'<ul class="bids"></ul>' +
+		'<form>' +
+		'<input class="bid" type="number" min="0" step="1" placeholder="Your max..." />' +
+		'<button type="submit">Bid!</button>' +
+		'<div class="price-container"></div>' +
+		'</form>' +
+		'</li>'
+	);
+
+	templates.register('price',
+		'<div class="price" data-id="{{ model.id }}">' +
+		'<video {{ user.video.attr }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
+		'<h4 class="value {{ value_class }}">{{ model.formatted }}</h4>' +
+		'</div>'
+	);
+
+	templates.register('bid',
+		'<li class="bid" data-id="{{ model.id }}">' +
+		'<video {{ user.video.attr }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
+		'<span class="value">${{ model.value }}</span>' +
+		'</li>'
+	);
+
 	var ELS = {
 		auctionName: document.getElementById('auction-name'),
 		roommates: document.getElementById('roommates'),
@@ -34,8 +68,15 @@
 		addBidListener(user, auction);
 		addNewRoomListener(auction);
 		addRemoveRoomListener(auction);
+		addRenderListener(auction);
 		addFocusBidListener();
 		addContentListeners();
+	}
+
+	function addRenderListener(auction) {
+		window.addEventListener('render', function(){
+			render(auction);
+		});
 	}
 
 	function addFocusBidListener() {
@@ -76,11 +117,13 @@
 				source.model[key] = utils.cleanNumber(source.model[key]);
 			source.save(app.guard());
 			if (source.cache) source.cache();
+			target = null;
 
 		}
 
 		function mark(e) {
 			if (!utils.matches(e.target, "[contenteditable=true]")) return;
+			if (target && target !== target) save(e);
 			target = e.target;
 		}
 
@@ -92,14 +135,36 @@
 	}
 
 	function addBidListener(user, auction) {
-		ELS.rooms.addEventListener("submit", function(e){
+		ELS.rooms.addEventListener('submit', function(e){
+
 			e.preventDefault();
-			var bid = utils.cleanNumber(e.target.childNodes[0].value);
+
 			var room = auction.room(e.target.parentNode.dataset.id);
-			if (isNaN(bid)) return app.error("please enter a valid bid amount");
-			if (bid < 1) return app.error("bids must be positive numbers");
-			if (bid > ELS.remaining.value) return app.error("bids must be less than the remaining rent");
-			room.placeBid(user, bid, app.guard(renderBid));
+			var value = e.target.childNodes[0].value;
+			var bid, bids = room.bids();
+
+			// find a default bid value if none was provided
+			if (!value) {
+				if (bids.length > 0) {
+					if (bids[0].user.model.id === user.model.id)
+						return app.error('you already have the top bid!');
+					else bid = bids[0].model.value + 1;
+				} else {
+					bid = 1;
+				}
+			} else {
+				bid = utils.cleanNumber(value);
+			}
+
+			// validate the number submission
+			if (isNaN(bid)) return app.error('please enter a valid bid amount');
+
+			// remove the bid if less than 1, or add the bid if greater than 1
+			if (bid < 1) room.redactBid(user, app.guard());
+			else room.placeBid(user, bid, app.guard());
+			//if (bid < 1) room.redactBid(user);
+			//else room.placeBid(user, bid);
+			//render(auction);
 		});
 	}
 
@@ -112,13 +177,14 @@
 
 	function addRemoveRoomListener(auction) {
 		ELS.rooms.addEventListener('click', function(e){
-			if (!utils.matches(e.target, ".delete")) return;
+			if (!utils.matches(e.target, '.delete')) return;
 			e.preventDefault();
 			var target = e.target.parentNode;
-			if (!target.source) throw new Error("unable to delete room, missing model source");
-			auction.removeRoom(target.source, app.guard());
-			if (target.parentNode)
-				target.parentNode.removeChild(target);
+			if (!target.source) throw new Error('unable to delete room, missing model source');
+			auction.removeRoom(target.source, app.guard(function(){
+				if (target.parentNode)
+					target.parentNode.removeChild(target);
+			}));
 		});
 	}
 
@@ -134,38 +200,41 @@
 
 		var total = auction.model.rent;
 		var rooms = auction.rooms();
-		var size = rooms.length;
+		var count = rooms.length;
 		var prices = {};
+		var bidcount = 0;
 		var sum = 0;
 
-		// first, get the prices for rooms with bids
+		// get the market price ranges for rooms
 		rooms.forEach(function(room){
 			var model = { id: room.model.id };
 			var source = { model: model };
 			prices[room.model.id] = source;
 			var bids = room.bids();
-			switch (bids.length) {
-				case 0: return;
-				case 1:
-					model.value = 1;
-					break;
-				default:
-					model.value = bids[1].model.value + 1;
-					break;
+			var len = bids.length;
+			if (len > 0) {
+				var bid = bids[0];
+				source.user = bid.user;
+				source.value_class = 'user';
+				model.value = bid.model.value;
+				bidcount++;
 			}
-			source.value_class = 'user';
-			source.user = bids[0].user;
 			sum += model.value;
-			size--;
 		});
 
-		// next, split the remaining total amongst the non-bid rooms
+
+		var opencount = count - bidcount;
 		var remaining = total - sum;
-		var split = Math.ceil(remaining / size);
-		rooms.forEach(function(room){
-			var model = prices[room.model.id].model;
-			if (!model.value) model.value = split;
-		});
+
+		// for open rooms, split the remainder evenly
+		if (opencount > 0) {
+			var split = remaining / opencount;
+			rooms.forEach(function(room){
+				var source = prices[room.model.id];
+				if (source.user) return;
+				source.model.value = split;
+			});
+		}
 
 		// render the prices into the price containers
 		Object.keys(prices).forEach(function(id){
@@ -175,7 +244,7 @@
 			renderModel('price', source, parent);
 		});
 
-		// set the remaining bids available
+		// render the remaining value
 		ELS.remaining.value = remaining;
 		ELS.remaining.innerText = utils.formatDollars(remaining);
 
@@ -211,66 +280,37 @@
 	function renderBids(room) {
 		var parent = ELS.rooms.querySelector('[data-id="' + room.model.id + '"] .bids');
 		utils.pruneChildren(parent, room.model.bids);
-		room.bids().forEach(function(bid){
-			renderBid(bid, parent);
+		room.bids().forEach(function(bid, index){
+			renderBid(index, bid, parent);
 		});
 	}
 
-	function renderBid(bid, parent) {
+	function renderBid(index, bid, parent) {
 		if (!parent)
 			parent = ELS.rooms.querySelector('[data-id="' + bid.room.model.id + '"] .bids');
-		renderModel('bid', bid, parent);
+		renderModel('bid', bid, parent, index);
 	}
 
-	function renderModel(template, source, parent) {
+	function renderModel(template, source, parent, index) {
 		//TODO: cache these?
 		var selector = '[data-id="' + source.model.id + '"]';
 		var existing = parent.querySelector(selector);
+		var node, rendered = templates.renderNode(template, source);
 		if (existing) {
-			var html = templates.render(template, source);
-			if (existing.outerHTML !== html) {
-				existing.outerHTML = html;
-				parent.querySelector(selector).source = source;
+			node = existing;
+			if (rendered.outerHTML !== existing.html) {
+				existing.outerHTML = rendered.outerHTML;
+				node = parent.querySelector(selector);
+				node.html = rendered.outerHTML;
 			}
 		} else {
-			var node = templates.renderNode(template, source);
-			node.source = source;
-			parent.appendChild(node);
+			node = rendered;
+			node.html = rendered.outerHTML;
+			parent.appendChild(rendered);
 		}
+		if (index >= 0 && !utils.indexMatches(index, node, parent))
+			parent.insertBefore(node, parent.childNodes[index]);
+		node.source = source;
 	}
-
-	templates.register('user',
-		'<li class="user" data-id="{{ model.id }}">' +
-		'<video {{ model.video }} data-toggle="{{ current }}" class="avatar" style="background-color:{{ model.color }}"></video>' +
-		'<h3 contenteditable="{{ current }}">{{ model.name }}</h3>' +
-		'</li>'
-	);
-
-	templates.register('room',
-		'<li class="room" data-id="{{ model.id }}">' +
-		'<h3 contenteditable="true">{{ model.name }}</h3>' +
-		'<a class="delete">&times;</a>' +
-		'<ul class="bids"></ul>' +
-		'<form>' +
-		'<input class="bid" type="number" min="1" step="1" placeholder="Set bid..." />' +
-		'<button type="submit">Bid!</button>' +
-		'<div class="price-container"></div>' +
-		'</form>' +
-		'</li>'
-	);
-
-	templates.register('price',
-		'<div class="price" data-id="{{ model.id }}">' +
-		'<video {{ user.model.video }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
-		'<h4 class="value {{ value_class }}">{{ model.formatted }}</h4>' +
-		'</div>'
-	);
-
-	templates.register('bid',
-		'<li class="bid" data-id="{{ model.id }}">' +
-		'<video {{ user.model.video }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
-		'<span class="value">${{ model.value }}</span>' +
-		'</li>'
-	);
 
 })();

@@ -23,13 +23,9 @@
 		var id = user.model.id;
 		this.model.bids[id] = bid;
 		if (done) {
-			var room = this;
 			var ref = this.ref("bids");
-			if (!ref) done(new Error("unable to lookup bid reference, unknown parent auction"))
-			ref.child(id).set(bid, function(err){
-				if (err) done(err);
-				else done(null, room.bid(id));
-			});
+			if (!ref) done(new Error("unable to lookup bid reference, unknown parent auction"));
+			ref.child(id).set(bid, done);
 		}
 	};
 
@@ -53,7 +49,7 @@
 		delete this.model.bids[id];
 		if (done) {
 			var ref = this.ref("bids");
-			if (!ref) done(new Error("unable to lookup bid reference, unknown parent auction"))
+			if (!ref) done(new Error("unable to lookup bid reference, unknown parent auction"));
 			ref.child(id).remove(done);
 		}
 	};

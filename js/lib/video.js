@@ -21,16 +21,16 @@
 			stream = cache[stream];
 		if (this.stream = stream)
 			this.src = URL.createObjectURL(this.stream);
+		if (this.src)
+			this.attr = 'autoplay src="' + this.src + '"';
 	};
-
-	Video.prototype.attr = function() {
-		return this.src ? ('autoplay src="' + this.src + '"') : '';
-	};
-
 
 	Video.prototype.destroy = function() {
+		if (this.call) this.call.close();
+		delete this.call;
 		delete this.stream;
 		delete this.src;
+		delete this.attr;
 		delete cache[this.id];
 		return this;
 	};

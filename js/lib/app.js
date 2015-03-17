@@ -3,9 +3,21 @@
 	"use strict";
 
 	var app = {};
+	var error = document.getElementById('error');
 
 	app.session = localStorage;
-	app.error = console.error.bind(console);
+
+	app.error = function(msg) {
+		msg = Array.prototype.slice.call(arguments).join(' ');
+		msg = msg.substr(0,1).toUpperCase() + msg.substr(1);
+		error.innerHTML = msg;
+		error.classList.add('open');
+		if (error.timeout) clearTimeout(error.timeout);
+		error.timeout = setTimeout(function(){
+			delete error.timeout;
+			error.classList.remove('open');
+		}, 3000);
+	};
 
 	app.navigate = function(href){
 		window.location.href = href;
@@ -23,7 +35,7 @@
 
 	app.guard = function(fn) {
 		return function(err, out) {
-			if (err) app.error(err);
+			if (err) app.error(err.message || err);
 			else if (fn) fn(out);
 		}
 	};

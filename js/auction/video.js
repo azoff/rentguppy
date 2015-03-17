@@ -11,8 +11,18 @@
 
 	function addEventListeners(user, auction) {
 		addVideoClickListener(user, auction);
+		addNewPeerListener(user, auction);
 		addPeerCallListeners(user);
 		addExitListener(user);
+	}
+
+	function addNewPeerListener(user, auction) {
+		auction.ref('users').on('child_added', function(data){
+			var added = new User(data.val());
+			if (!user.video.stream) return;
+			if (user.model.id === added.model.id) return;
+			callUser(user, added);
+		});
 	}
 
 	function addVideoClickListener(user, auction) {
@@ -29,23 +39,28 @@
 
 	function addExitListener(user) {
 		window.addEventListener('beforeunload', function(){
-			disconnectUserStream(user);
+			user.disconnect(app.guard());
+		});
+	}
+
+	function connectCall(call, user) {
+		user.video.call = call;
+		call.on('stream', acceptStream(user));
+		call.on('close', acceptStream(user));
+		call.on('error', function(err){
+			app.error(user.model.name + "'s connection is having issues: ", err.message || err);
 		});
 	}
 
 	function addPeerCallListeners(user) {
 		user.peer.on('call', function(call){
-			var user = auction.peer(call.peer);
-			if (!user) return;
-			call.answer(user.video.stream);
-			call.on('stream', acceptStream(user));
-			call.on('disconnect', acceptStream(user));
-			call.on('error', function(err){
-				app.error('answer', user.model.id, err);
-			});
+			var from = auction.peer(call.peer);
+			console.log('received call from', from.model.name);
+			call.answer(user.video.stream || null);
+			connectCall(call, from);
 		});
 		user.peer.on('error', function(err){
-			app.error('peer', user.model.id, err);
+			app.error("your connection is having issues: ", err.message || err);
 		});
 	}
 
@@ -56,12 +71,10 @@
 
 	function disconnectUserStream(user) {
 		setStream(user, null);
-		user.disconnect(app.guard());
 	}
 
 	function connectUserStream(user, auction) {
 		navigator.getUserMedia({ video: true }, function(stream){
-			user.connect(app.guard());
 			setStream(user, stream);
 			shareStream(user, auction);
 		}, app.guard());
@@ -70,20 +83,20 @@
 	function setStream(user, stream) {
 		if (!stream) user.video.destroy();
 		else user.video.create(stream);
-		user.model.video = user.video.attr();
-		user.save(app.guard());
+		utils.trigger(window, 'render');
 	}
 
-	function shareStream(user, auction) {
-		auction.users().forEach(function(their){
-			if (!their.model.peer) return;
-			if (their.model.id === user.model.id) return;
-			var call = user.peer.call(their.model.peer, user.video.stream);
-			call.on('stream', acceptStream(their));
-			call.on('error', function(err){
-				app.error('call', their.model.id, err);
-			});
+	function shareStream(from, auction) {
+		auction.users().forEach(function(to){
+			if (!from.model.peer) return;
+			if (from.model.id === to.model.id) return;
+			callUser(from, to);
 		});
+	}
+
+	function callUser(from, to) {
+		var call = from.peer.call(to.model.peer, from.video.stream);
+		connectCall(call, to);
 	}
 
 	function acceptStream(user) {

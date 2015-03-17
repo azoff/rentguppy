@@ -46,14 +46,17 @@
 	};
 
 	utils.formatDollars = function(i) {
-		var dollars = i.toString();
+		var dollars = Math.ceil(i).toString();
 		var x = dollars.split('.');
 		var x1 = x[0];
 		var x2 = x.length > 1 ? '.' + x[1] : '';
 		var rgx = /(\d+)(\d{3})/;
 		while (rgx.test(x1))
 			x1 = x1.replace(rgx, '$1' + ',' + '$2');
-		return '$' + x1 + x2;
+		var formatted = x1 + x2;
+		if (formatted.substr(0, 1) === '-')
+			return '-$' + formatted.substr(1);
+		else return '$' + formatted;
 	};
 
 	utils.cleanNumber = function(number) {
@@ -97,6 +100,14 @@
 	utils.idMapToSelector = function(idMap) {
 		var ids = Object.keys(idMap);
 		return '[data-id="' + ids.join('"][data-id="') + '"]'
+	};
+
+	utils.indexOf = function(child, parent) {
+		return Array.prototype.slice.call(parent.childNodes).indexOf(child);
+	};
+
+	utils.indexMatches = function(index, child, parent) {
+		return utils.indexOf(child, parent) === index;
 	};
 
 	utils.pruneChildren = function(el, ids) {
