@@ -212,14 +212,13 @@
 			prices[room.model.id] = source;
 			var bids = room.bids();
 			var len = bids.length;
-			if (len > 0) {
-				var bid = bids[0];
-				source.user = bid.user;
-				source.value_class = 'user';
-				model.value = bid.model.value;
-				bidcount++;
-			}
+			if (len <= 0) return;
+			var bid = bids[0];
+			source.user = bid.user;
+			source.value_class = 'user';
+			model.value = bid.model.value;
 			sum += model.value;
+			bidcount++;
 		});
 
 
