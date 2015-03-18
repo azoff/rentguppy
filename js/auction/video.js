@@ -1,5 +1,6 @@
 (function(){
 
+	var media = { video: true, audio: true };
 	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
 	function main(event) {
@@ -76,15 +77,15 @@
 	}
 
 	function connectUserStream(user, auction) {
-		navigator.getUserMedia({ video: true }, function(stream){
+		navigator.getUserMedia(media, function(stream){
 			setStream(user, stream);
 			shareStream(user, auction);
 		}, app.guard());
 	}
 
 	function setStream(user, stream) {
-		if (!stream) user.video.destroy();
-		else user.video.create(stream);
+		if (!stream) user.video.unload();
+		else user.video.load(stream);
 		utils.trigger(window, 'render');
 	}
 

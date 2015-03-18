@@ -4,40 +4,39 @@
 
 	var cache = {};
 
-	function Video() {
+	function Video(muted) {
+		this.muted = muted;
 	}
 
 	Video.get = function(user) {
 		var video = cache[user.model.id];
 		if (!video) {
-			video = new Video();
+			video = new Video(user.current);
 			cache[user.model.id] = video;
 		}
 		return video;
 	};
 
-	Video.prototype.create = function(stream) {
-		if (stream === undefined)
-			stream = cache[stream];
+	Video.prototype.load = function(stream) {
 		if (this.stream = stream)
 			this.src = URL.createObjectURL(this.stream);
-		if (this.src)
+		if (this.src) {
 			this.attr = 'autoplay src="' + this.src + '"';
+			if (this.muted) this.attr = 'muted ' + this.attr;
+		}
 	};
 
-	Video.prototype.removeTracks = function() {
-		var stream = this.stream;
-		if (!stream) return;
-		stream.getTracks().forEach(stream.removeTrack.bind(stream))
-	};
-
-	Video.prototype.destroy = function() {
-		this.removeTracks();
-		delete this.call;
+	Video.prototype.unload = function() {
+		if (this.stream) {
+			var stream = this.stream;
+			stream.getTracks().forEach(function(track){
+				track.stop();
+				stream.removeTrack(track);
+			});
+		}
 		delete this.stream;
 		delete this.src;
 		delete this.attr;
-		delete cache[this.id];
 		return this;
 	};
 
