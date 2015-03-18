@@ -245,14 +245,16 @@ section {
 				top: 50%;
 			}
 			.value {
-				font-weight: 800;
-				color: $color-copy;
 				&.user {
 					color: white;
-					@include text-shadow(1px 1px 0 fade-out($color-copy, 0.5));
+					@include text-shadow(1px 1px 1px fade-out($color-copy, 0.2));
 				}
+				width: 3.5em;
+				font-weight: 800;
 				font-size: 2.5em;
-				margin-top: -0.6em;
+				color: $color-copy;
+				margin: -0.6em auto 0;
+				@include text-overflow-ellipses;
 			}
 		}
 

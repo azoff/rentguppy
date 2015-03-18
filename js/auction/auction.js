@@ -4,7 +4,7 @@
 
 	templates.register('user',
 		'<li class="user" data-id="{{ model.id }}">' +
-		'<video {{ video.attr }} data-toggle="{{ current }}" class="avatar" style="background-color:{{ model.color }}"></video>' +
+		'<video {{ video.attr }} data-toggle="{{ current }}" class="avatar" style="color:{{ model.color }}"></video>' +
 		'<h3 contenteditable="{{ current }}">{{ model.name }}</h3>' +
 		'</li>'
 	);
@@ -24,14 +24,14 @@
 
 	templates.register('price',
 		'<div class="price" data-id="{{ model.id }}">' +
-		'<video {{ user.video.attr }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
+		'<video {{ user.video.attr }} class="avatar" style="color:{{ user.model.color }}"></video>' +
 		'<h4 class="value {{ value_class }}">{{ model.formatted }}</h4>' +
 		'</div>'
 	);
 
 	templates.register('bid',
 		'<li class="bid" data-id="{{ model.id }}">' +
-		'<video {{ user.video.attr }} class="avatar" style="background-color:{{ user.model.color }}"></video>' +
+		'<video {{ user.video.attr }} class="avatar" style="color:{{ user.model.color }}"></video>' +
 		'<span class="value">${{ model.value }}</span>' +
 		'</li>'
 	);

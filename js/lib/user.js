@@ -2,13 +2,16 @@
 
 	"use strict";
 
+	var peer = null;
+
 	function User(model, auction) {
 		var ref = User.current.ref;
 		this.auction = auction;
 		this.model = model || {};
 		this.current = ref ? ref.model.id === this.model.id : true;
 		this.video = Video.get(this);
-		delete this.model.peer;
+		if (this.current && peer)
+			this.model.peer = peer.id;
 	}
 
 	User.sessionKey = "user.current";
@@ -41,24 +44,26 @@
 		return this;
 	};
 
+	User.prototype.peer = function() {
+		return peer;
+	};
+
 	User.prototype.connect = function(done) {
 
 		var user = this;
 
 		// check for existing peer
-		if (user.peer) {
-			if (user.peer.destroyed)
-				throw new Error('unable to reconnect to destroyed peer');
-			else if (user.peer.disconnected)
-				user.peer.reconnect();
-			return done(null, user.peer.id);
+		if (peer) {
+			if (peer.destroyed) throw new Error('unable to reconnect to destroyed peer');
+			else if (peer.disconnected) peer.reconnect();
+			return done(null, peer.id);
 		}
 
 		// create a new peer
-		user.peer = new Peer({key: 'nubs0cvy1d1jor'});
-		user.peer.on('open', function(id){
+		peer = new Peer({key: 'nubs0cvy1d1jor'});
+		peer.on('open', function(id){
 			user.model.peer = id;
-			user.save(function(err){
+			user.cache().save(function(err){
 				done(err, id);
 			});
 		});
@@ -66,15 +71,14 @@
 	};
 
 	User.prototype.connected = function() {
-		return this.peer && !this.peer.disconnected && !this.peer.destroyed && this.model.peer === this.peer.id;
+		return peer !== null;
 	};
 
-	User.prototype.disconnect = function(destroy, done) {
+	User.prototype.disconnect = function(done) {
 		if (!this.connected()) return done();
-		this.peer.destroy();
+		peer.destroy(); peer = null;
 		delete this.model.peer;
-		delete this.peer;
-		this.save(done);
+		this.cache().save(done);
 	};
 
 	User.prototype.ref = function() {

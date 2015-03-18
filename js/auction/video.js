@@ -5,8 +5,9 @@
 	function main(event) {
 		var user = event.detail.user;
 		var auction = event.detail.auction;
-		user.connect(app.guard());
-		addEventListeners(user, auction);
+		user.connect(app.guard(function(){
+			addEventListeners(user, auction);
+		}));
 	}
 
 	function addEventListeners(user, auction) {
@@ -17,11 +18,14 @@
 	}
 
 	function addNewPeerListener(user, auction) {
-		auction.ref('users').on('child_added', function(data){
-			var added = new User(data.val());
+		auction.ref('users').on('child_changed', function(data){
 			if (!user.video.stream) return;
-			if (user.model.id === added.model.id) return;
-			callUser(user, added);
+			var model = data.val();
+			if (model.id === user.model.id) return;
+			if (!model.peer) return;
+			if (model.peer === auction.user(model.id).model.peer) return;
+			//console.log('detected change to', user.model.name, '@', user.model.peer);
+			callUser(user, new User(model));
 		});
 	}
 
@@ -44,7 +48,6 @@
 	}
 
 	function connectCall(call, user) {
-		user.video.call = call;
 		call.on('stream', acceptStream(user));
 		call.on('close', acceptStream(user));
 		call.on('error', function(err){
@@ -53,13 +56,12 @@
 	}
 
 	function addPeerCallListeners(user) {
-		user.peer.on('call', function(call){
+		user.peer().on('call', function(call){
 			var from = auction.peer(call.peer);
-			console.log('received call from', from.model.name);
+			//console.log('received call from', from.model.name, '@', from.model.peer);
 			call.answer(user.video.stream || null);
 			connectCall(call, from);
-		});
-		user.peer.on('error', function(err){
+		}).on('error', function(err){
 			app.error("your connection is having issues: ", err.message || err);
 		});
 	}
@@ -88,15 +90,19 @@
 
 	function shareStream(from, auction) {
 		auction.users().forEach(function(to){
-			if (!from.model.peer) return;
-			if (from.model.id === to.model.id) return;
+			if (!to.model.peer || from.model.peer === to.model.peer)
+				return; // skip on self or not connected
 			callUser(from, to);
 		});
 	}
 
 	function callUser(from, to) {
-		var call = from.peer.call(to.model.peer, from.video.stream);
-		connectCall(call, to);
+		if (!to.model.peer) throw new Error('destination peer required');
+		if (!from.connected()) throw new Error('source peer required');
+		if (!from.video.stream) return new Error('source video stream missing');
+		from.video.call = from.peer().call(to.model.peer, from.video.stream);
+		//console.log('calling', to.model.name, '@', to.model.peer);
+		connectCall(from.video.call, to);
 	}
 
 	function acceptStream(user) {

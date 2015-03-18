@@ -25,8 +25,14 @@
 			this.attr = 'autoplay src="' + this.src + '"';
 	};
 
+	Video.prototype.removeTracks = function() {
+		var stream = this.stream;
+		if (!stream) return;
+		stream.getTracks().forEach(stream.removeTrack.bind(stream))
+	};
+
 	Video.prototype.destroy = function() {
-		if (this.call) this.call.close();
+		this.removeTracks();
 		delete this.call;
 		delete this.stream;
 		delete this.src;
