@@ -5,13 +5,12 @@
 	var cache = {};
 
 	function Video(muted) {
-		this.muted = muted;
 	}
 
 	Video.get = function(user) {
 		var video = cache[user.model.id];
 		if (!video) {
-			video = new Video(user.current);
+			video = new Video().mute(user.current);
 			cache[user.model.id] = video;
 		}
 		return video;
@@ -20,10 +19,21 @@
 	Video.prototype.load = function(stream) {
 		if (this.stream = stream)
 			this.src = URL.createObjectURL(this.stream);
-		if (this.src) {
+		if (this.src)
 			this.attr = 'autoplay src="' + this.src + '"';
-			if (this.muted) this.attr = 'muted ' + this.attr;
-		}
+	};
+
+	Video.prototype.mute = function(muted) {
+		if (muted) this.muted = 'muted';
+		else delete this.muted;
+		if (this.stream) this.stream.getTracks().forEach(function(track){
+			if (track.kind === 'audio') track.enabled = !muted;
+		});
+		return this;
+	};
+
+	Video.prototype.enabled = function(enabled) {
+
 	};
 
 	Video.prototype.unload = function() {
@@ -31,9 +41,9 @@
 			var stream = this.stream;
 			stream.getTracks().forEach(function(track){
 				track.stop();
-				stream.removeTrack(track);
 			});
 		}
+		delete this.muted;
 		delete this.stream;
 		delete this.src;
 		delete this.attr;

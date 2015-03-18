@@ -35,8 +35,12 @@
 
 	app.guard = function(fn) {
 		return function(err, out) {
-			if (err) app.error(err.message || err);
-			else if (fn) fn(out);
+			if (err) {
+				var msg = err.message || err.msg || err.toString();
+				app.error('Oops! Something Broke.', msg);
+			} else if (fn) {
+				fn(out);
+			}
 		}
 	};
 

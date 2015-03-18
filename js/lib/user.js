@@ -22,7 +22,7 @@
 			var seed = utils.randomSeed();
 			seed += document.referrer;
 			seed += navigator.userAgent;
-			[].slice.call(navigator.plugins).forEach(function(p){
+			Array.prototype.slice.call(navigator.plugins).forEach(function(p){
 				seed += p.name;
 				seed += p.description;
 			});

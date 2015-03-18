@@ -12,8 +12,8 @@
 	}
 
 	function addEventListeners(user, auction) {
-		addVideoClickListener(user, auction);
 		addNewPeerListener(user, auction);
+		addVideoClickListener(auction);
 		addPeerCallListeners(user);
 		addExitListener(user);
 	}
@@ -30,16 +30,19 @@
 		});
 	}
 
-	function addVideoClickListener(user, auction) {
+	function addVideoClickListener(auction) {
 		document.addEventListener('click', function(e){
 			if (!utils.matches(e.target, '.user video')) return;
-			var video = e.target;
-			var node = video.parentNode;
-			var source = node.source;
+			var source = e.target.parentNode.source;
 			if (!source) throw new Error('unable to modify video without source');
-			if (source.model.id === user.model.id)
-				toggleStream(user, auction);
+			if (source.current) toggleStream(source, auction);
+			else toggleMuted(source);
 		});
+	}
+
+	function toggleMuted(user) {
+		user.video.mute(!user.video.muted);
+		utils.trigger(window, 'render');
 	}
 
 	function addExitListener(user) {
@@ -63,8 +66,18 @@
 			call.answer(user.video.stream || null);
 			connectCall(call, from);
 		}).on('error', function(err){
-			app.error("your connection is having issues: ", err.message || err);
+			var msg = err.message || err.toString();
+			var match = msg.match(/connect to peer (\w+)$/);
+			if (!match) app.error("your connection is having issues:", msg);
+			else removePeer(match[1]);
 		});
+	}
+
+	function removePeer(peer) {
+		var user = auction.peer(peer);
+		if (!user) return;
+		delete user.model.peer;
+		user.save(app.guard());
 	}
 
 	function toggleStream(user, auction) {
