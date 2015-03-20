@@ -3,7 +3,8 @@
 	"use strict";
 
 	var tutorial = { helper: document.querySelector('#helper') };
-	tutorial.text = tutorial.helper.querySelector('.text');
+	if (tutorial.helper)
+		tutorial.text = tutorial.helper.querySelector('.text');
 
 	tutorial.toggleTarget = function callee(on, el) {
 		var method = on ? 'add' : 'remove';
