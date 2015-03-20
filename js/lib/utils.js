@@ -4,6 +4,31 @@
 
 	var utils = {};
 
+	utils.waitUntil = function(el, type, predicate, done) {
+		el.addEventListener(type, function listener(event){
+			if (!predicate(event)) return;
+			el.removeEventListener(type, listener);
+			done(event, el);
+		});
+	};
+
+	utils.centerScreenRelativeOffset = function(el) {
+		var offset = { screenLeft: '50%', screenTop: '50%' };
+		if (!el) return offset;
+		var rect = el.getBoundingClientRect();
+		var x = rect.left + rect.width/2;
+		var y = rect.top + rect.top/2;
+		var left = x / document.body.clientWidth;
+		var top = y / document.body.clientHeight;
+		offset.screenLeft = (left * 100).toFixed(2).toString() + '%';
+		offset.screenTop = (top * 100).toFixed(2).toString() + '%';
+		offset.above = top < 0.5;
+		offset.below = top >= 0.5;
+		offset.left = left <= 0.5;
+		offset.right = left > 0.5;
+		return offset;
+	};
+
 	utils.hashCode = function(str) {
 		var code, i, hash = 0;
 		if (str.length == 0) return hash;

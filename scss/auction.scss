@@ -87,6 +87,7 @@ aside {
 	position: absolute;
 	z-index: 2;
 	padding: 2em;
+	overflow: auto;
 	background-color: white;
 
 	h1 {
@@ -272,7 +273,9 @@ section {
 			}
 		}
 
-		&:hover .price-container, :focus ~ .price-container {
+		&:hover .price-container,
+		:focus ~ .price-container,
+		&.tutorial-target .price-container {
 			left: -9999px;
 			@include opacity(0);
 			@include transition(opacity 200ms, left 0s ease 200ms);

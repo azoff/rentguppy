@@ -1,0 +1,62 @@
+@import "compass";
+@import "../constants";
+
+body.tutorial-mode {
+
+	.tutorial-subject {
+		* {
+			@include opacity(0.5);
+			@include transition(opacity $duration-tutorial-transition);
+			&.tutorial-target {
+				@include opacity(1);
+			}
+		}
+	}
+
+	#helper {
+		top: 50%;
+	}
+
+}
+
+#helper {
+
+	width: 50%;
+	@include translate(-38%, -50%);
+
+	&.above.left {
+		@include translate(-20%, 15%)
+	}
+
+	&.above.right {
+		@include translate(-85%, 9%)
+	}
+
+	top: -150%;
+	left: 50%;
+	z-index: 50;
+	position: absolute;
+	@include transition(all 500ms);
+
+	.mascot {
+		background: url(../icon/largetile.png) center center/cover no-repeat transparent;
+		height: 160px;
+		width: 160px;
+		margin-top: -60px;
+		@include transform(scaleX(-1));
+		position: relative;
+		z-index: 1;
+	}
+
+	.text {
+		z-index: 2;
+		padding: 1em;
+		position: relative;
+		line-height: 1.4;
+		margin-left: 6em;
+		background-color: white;
+		@include box-shadow(2px 2px 5px 0 fade-out(black, 0.6));
+		@include border-radius(20px);
+	}
+
+}

@@ -3,7 +3,7 @@
 	"use strict";
 
 	templates.register('user',
-		'<li class="user" data-id="{{ model.id }}">' +
+		'<li class="user" data-current="{{ current }}" data-id="{{ model.id }}">' +
 		'<video {{ video.attr }} {{ video.muted }} data-current="{{ current }}" class="avatar" style="color:{{ model.color }}"></video>' +
 		'<h3 contenteditable="{{ current }}">{{ model.name }}</h3>' +
 		'</li>'
@@ -15,7 +15,7 @@
 		'<a class="delete">&times;</a>' +
 		'<ul class="bids"></ul>' +
 		'<form>' +
-		'<input class="bid" type="number" min="0" step="1" placeholder="Your max..." />' +
+		'<input class="bid" type="number" min="0" step="1" placeholder="Your bid..." />' +
 		'<button type="submit">Bid!</button>' +
 		'<div class="price-container"></div>' +
 		'</form>' +
